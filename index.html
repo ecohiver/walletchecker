@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Hive Wallet</title>
+    <script src="https://cdn.jsdelivr.net/npm/@hiveio/hive-js/dist/hive.min.js"></script>
+    <script>
+         hive.api.setOptions({ url: 'https://api.hive.blog' });
+    </script>
+
+ <style>
+     * {
+         box-sizing: border-box;
+         margin: 0;
+         padding: 0;
+         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+     }
+     body {
+         background-color: #f3f4f6; 
+         color: #1f2937;
+         display: flex;
+         justify-content: center;
+         padding: 40px 20px;
+         min-height: 100vh;
+     }
+
+ 
+     .wallet-container {
+         background: #ffffff;
+         width: 100%;
+         max-width: 480px;
+         border-radius: 16px;
+         box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+         padding: 32px;
+         height: fit-content;
+     }
+
+
+     h1 {
+         font-size: 24px;
+         font-weight: 700;
+         color: #111827;
+         text-align: center;
+         margin-bottom: 8px;
+     }
+     p.subtitle {
+         text-align: center;
+         color: #6b7280;
+         font-size: 14px;
+         margin-bottom: 24px;
+     }
+
+     .input-group {
+         display: flex;
+         gap: 10px;
+         margin-bottom: 24px;
+     }
+     input[type="text"] {
+         flex: 1;
+         padding: 12px 16px;
+         font-size: 16px;
+         border: 1px solid #d1d5db;
+         border-radius: 8px;
+         outline: none;
+         transition: border-color 0.2s;
+     }
+     input[type="text"]:focus {
+         border-color: #e31337; 
+         box-shadow: 0 0 0 3px rgba(227, 19, 55, 0.1);
+     }
+     button {
+         background-color: #e31337;
+         color: white;
+         border: none;
+         border-radius: 8px;
+         padding: 0 20px;
+         font-size: 16px;
+         font-weight: 600;
+         cursor: pointer;
+         transition: background-color 0.2s, transform 0.1s;
+     }
+     button:hover { background-color: #c91030; }
+     button:active { transform: scale(0.98); }
+
+     .results {
+         display: none; 
+         animation: fadeIn 0.4s ease-in-out;
+     }
+
+     
+     .balance-grid {
+         display: grid;
+         grid-template-columns: 1fr 1fr;
+         gap: 12px;
+         margin-bottom: 24px;
+     }
+     .balance-card {
+         background: #f9fafb;
+         border: 1px solid #e5e7eb;
+         border-radius: 12px;
+         padding: 16px;
+         text-align: center;
+     }
+     .balance-card span {
+         display: block;
+         font-size: 12px;
+         color: #6b7280;
+         text-transform: uppercase;
+         letter-spacing: 0.5px;
+         margin-bottom: 4px;
+         font-weight: 600;
+     }
+     .balance-card strong {
+         font-size: 18px;
+         color: #111827;
+     }
+
+     
+     .section-title {
+         font-size: 16px;
+         font-weight: 600;
+         margin-bottom: 12px;
+         color: #374151;
+         display: flex;
+         justify-content: space-between;
+         align-items: center;
+     }
+     .token-list-container {
+         max-height: 220px;
+         overflow-y: auto;
+         border: 1px solid #e5e7eb;
+         border-radius: 12px;
+         padding: 0 12px;
+     }
+     
+     .token-list-container::-webkit-scrollbar { width: 6px; }
+     .token-list-container::-webkit-scrollbar-track { background: transparent; }
+     .token-list-container::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
+
+     .token-item {
+         display: flex;
+         justify-content: space-between;
+         padding: 12px 4px;
+         border-bottom: 1px solid #f3f4f6;
+     }
+     .token-item:last-child { border-bottom: none; }
+     .token-item .symbol { font-weight: 600; color: #111827; }
+     .token-item .amount { font-weight: 500; color: #4b5563; }
+     
+     .loading-text {
+         text-align: center;
+         padding: 20px;
+         color: #6b7280;
+         font-size: 14px;
+     }
+
+     @keyframes fadeIn {
+         from { opacity: 0; transform: translateY(5px); }
+         to { opacity: 1; transform: translateY(0); }
+     }
+ </style>
+</head>
+<body>
+
+<div class="wallet-container">
+     <h1>Hive Wallet Checker</h1>
+     <p class="subtitle">Check Hive & Hive Engine Balances</p>
+     
+     <div class="input-group">
+         <input id='username' type='text' placeholder="Enter username (e.g., hiveio)" onkeypress="handleEnter(event)">
+         <button onclick='fetchBalances()'>Search</button>
+     </div>
+
+     <div id="walletData" class="results">
+         
+         <div class="balance-grid">
+             <div class="balance-card">
+                 <span>Liquid Hive</span>
+                 <strong id="liquidHive">0.000</strong>
+             </div>
+             <div class="balance-card">
+                 <span>Liquid HBD</span>
+                 <strong id="liquidHbd">0.000</strong>
+             </div>
+             <div class="balance-card">
+                 <span>Savings Hive</span>
+                 <strong id="savingsHive">0.000</strong>
+             </div>
+             <div class="balance-card">
+                 <span>Savings HBD</span>
+                 <strong id="savingsHbd">0.000</strong>
+             </div>
+         </div>
+         
+         <div class="section-title">
+             Engine Tokens
+         </div>
+         <div class="token-list-container" id="tokenListContainer">
+             <div class="loading-text" id="tokenList">Loading...</div>
+         </div>
+     </div>
+</div>
+
+<script>
+function handleEnter(event) {
+    if (event.key === 'Enter') {
+        fetchBalances();
+    }
+}
+
+function fetchBalances() {
+    var user = document.getElementById('username').value.trim().toLowerCase();
+
+    if (!user) { alert("Please enter a username."); return; }
+
+    
+    document.getElementById('walletData').style.display = 'block'; 
+    document.getElementById('tokenListContainer').innerHTML = '<div class="loading-text">Fetching tokens...</div>';
+
+   
+    hive.api.getAccounts([user], function(err, result) {
+        if (err || result.length === 0) {
+            alert("Error: Could not find user on the main Hive blockchain.");
+            document.getElementById('walletData').style.display = 'none'; 
+            return;
+        }
+
+        var account = result[0];
+        
+       
+        document.getElementById('liquidHive').innerText = account.balance.split(' ')[0];
+        document.getElementById('liquidHbd').innerText = account.hbd_balance.split(' ')[0];
+        document.getElementById('savingsHive').innerText = account.savings_balance.split(' ')[0];
+        document.getElementById('savingsHbd').innerText = account.savings_hbd_balance.split(' ')[0];
+
+        
+        fetchEngineTokens(user);
+    });
+}
+
+async function fetchEngineTokens(user) {
+    
+    const engineUrl = "https://api.primersion.com/contracts";
+    
+    const payload = {
+        jsonrpc: "2.0",
+        method: "find",
+        params: {
+            contract: "tokens",
+            table: "balances",
+            query: { account: user },
+            limit: 1000
+        },
+        id: 1
+    };
+
+    try {
+        const response = await fetch(engineUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        
+        const data = await response.json();
+        const tokens = data.result;
+        const container = document.getElementById('tokenListContainer');
+        
+        if (!tokens || tokens.length === 0) {
+            container.innerHTML = '<div class="loading-text">No hive-engine tokens found.</div>';
+            return;
+        }
+
+        const activeTokens = tokens.filter(t => parseFloat(t.balance) > 0 || parseFloat(t.stake) > 0);
+        activeTokens.sort((a, b) => a.symbol.localeCompare(b.symbol));
+
+       
+        container.innerHTML = '';
+
+        activeTokens.forEach(token => {
+            const liquid = parseFloat(token.balance) || 0;
+            const staked = parseFloat(token.stake) || 0;
+            const total = liquid + staked;
+            
+            
+            const item = document.createElement('div');
+            item.className = 'token-item';
+            item.innerHTML = `
+                <span class="symbol">${token.symbol}</span>
+                <span class="amount">${total.toLocaleString(undefined, {minimumFractionDigits: 3, maximumFractionDigits: 3})}</span>
+            `;
+            container.appendChild(item);
+        });
+
+    } catch (error) {
+        console.error("Engine API Error:", error);
+        document.getElementById('tokenListContainer').innerHTML = '<div class="loading-text" style="color:#e31337;">Failed to load tokens.</div>';
+    }
+}
+</script>
+
+</body>
+</html>
